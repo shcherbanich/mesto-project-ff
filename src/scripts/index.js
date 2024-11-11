@@ -1,3 +1,16 @@
+import { cardAPI, currentUserAPI } from './api';
+import {
+  avatarFormHandler,
+  onUserDataLoaded,
+  setUserAvatarDataOnPopup,
+  setUserDataOnPopup,
+  userFormHandler,
+} from './current-user';
+import { cardFormHandler, onCardListLoaded } from './cards';
+import { enablePopup } from './popup';
+import { enableValidation, validators } from './validation';
+import '../pages/index.css';
+
 function loadInitialData() {
   Promise.all([currentUserAPI.load(), cardAPI.loadList()])
     .then((response) => {
@@ -171,24 +184,20 @@ function onHideAvatarPopup() {
   }, 1000);
 }
 
-// скачать начальные данные
 loadInitialData();
 
-// обработка формы пользователя
 userFormHandler({
   onUserDataUpdate: () => {
     profilePopup.hide();
   },
 });
 
-// обработка формы карточки
 cardFormHandler({
   onCardCreation: () => {
     cardPopup.hide();
   },
 });
 
-// обработка формы аватара
 avatarFormHandler({
   onAvatarDataUpdate: () => {
     avatarPopup.hide();

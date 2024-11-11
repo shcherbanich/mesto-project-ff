@@ -1,3 +1,9 @@
+import { enablePopup } from './popup';
+import { customFormEvents, enableValidation } from './validation';
+import { cardAPI } from './api';
+import { currentUser } from './current-user';
+import placeHolderImg from '../images/placeholder.png';
+
 const deleteCardPopup = enablePopup({
   popupSelector: '.popup_type_delete-card',
   triggerSelector: '.hidden-popup-trigger',
@@ -7,8 +13,6 @@ const cardImagePopup = enablePopup({
   triggerSelector: '.hidden-popup-trigger',
 });
 
-// это нужно для правильной работы кнопки сохранить
-// чтобы она менялась во время загрузки
 enableValidation({
   formSelector: '.popup_type_delete-card .popup__form',
   submitButtonSelector: '.popup_type_delete-card .popup__button',
@@ -42,13 +46,13 @@ function onCardRemoveLike({ cardId, cardLikeButton, likesAmount }) {
 }
 
 function createCardNode({ id, title, imageUrl, likesCount, showDelete, isLiked }) {
-  const cardTemaplate = document.querySelector('#card-template');
-  if (cardTemaplate === null) {
+  const cardTemplate = document.querySelector('#card-template');
+  if (cardTemplate === null) {
     console.error('Тепмлейт карточки не найден');
     return;
   }
 
-  const card = cardTemaplate.content.cloneNode(true);
+  const card = cardTemplate.content.cloneNode(true);
   const cardImage = card.querySelector('.card__image');
   const cardDeleteButton = card.querySelector('.card__delete-button');
   const cardTitle = card.querySelector('.card__title');
@@ -99,7 +103,7 @@ function createCardNode({ id, title, imageUrl, likesCount, showDelete, isLiked }
   });
 
   cardImage.addEventListener('error', () => {
-    cardImage.src = './images/placeholder.png';
+    cardImage.src = placeHolderImg;
   });
 
   if (showDelete === true) {
@@ -247,3 +251,5 @@ deleteCardFormHandler({
     deleteCardPopup.hide();
   },
 });
+
+export { cardFormHandler, onCardListLoaded };
