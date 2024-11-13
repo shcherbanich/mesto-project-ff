@@ -1,58 +1,24 @@
-import { enablePopup } from './popup';
-import { customFormEvents, enableValidation } from './validation';
-import { cardAPI } from './api';
-import { currentUser } from './current-user';
 import placeHolderImg from '../images/placeholder.png';
 
-const deleteCardPopup = enablePopup({
-  popupSelector: '.popup_type_delete-card',
-  triggerSelector: '.hidden-popup-trigger',
-});
-const cardImagePopup = enablePopup({
-  popupSelector: '.popup_type_image',
-  triggerSelector: '.hidden-popup-trigger',
-});
-
-enableValidation({
-  formSelector: '.popup_type_delete-card .popup__form',
-  submitButtonSelector: '.popup_type_delete-card .popup__button',
-  formErrorSelector: '.popup__error',
-  inputErrorClass: 'popup__input_type_error',
-  validationConfig: [],
-});
-
-function onCardLike({ cardId, cardLikeButton, likesAmount }) {
-  cardAPI
-    .like(cardId)
-    .then((response) => {
-      cardLikeButton.classList.add('card__like-button_is-active');
-      likesAmount.textContent = response.likes.length;
-    })
-    .catch((error) => {
-      console.log(error);
-    });
-}
-
-function onCardRemoveLike({ cardId, cardLikeButton, likesAmount }) {
-  cardAPI
-    .removeLike(cardId)
-    .then((response) => {
-      cardLikeButton.classList.remove('card__like-button_is-active');
-      likesAmount.textContent = response.likes.length;
-    })
-    .catch((error) => {
-      console.log(error);
-    });
-}
-
-function createCardNode({ id, title, imageUrl, likesCount, showDelete, isLiked }) {
-  const cardTemplate = document.querySelector('#card-template');
+function createCardNode({
+  cardTemplate,
+  id,
+  title,
+  imageUrl,
+  likesCount,
+  showDelete,
+  isLiked,
+  onLikeButtonClick,
+  onImageClick,
+  onDeleteClick,
+}) {
   if (cardTemplate === null) {
-    console.error('Тепмлейт карточки не найден');
+    console.error('Темплейт карточки не найден');
     return;
   }
 
   const card = cardTemplate.content.cloneNode(true);
+  const cardRoot = card.querySelector('.places__item');
   const cardImage = card.querySelector('.card__image');
   const cardDeleteButton = card.querySelector('.card__delete-button');
   const cardTitle = card.querySelector('.card__title');
@@ -67,39 +33,22 @@ function createCardNode({ id, title, imageUrl, likesCount, showDelete, isLiked }
     cardLikeButton.classList.add('card__like-button_is-active');
   }
 
+  cardRoot.setAttribute('data-id', id);
   cardTitle.textContent = title;
   cardImage.src = imageUrl;
+  cardImage.alt = title;
   likesAmount.textContent = likesCount;
 
   cardLikeButton.addEventListener('click', () => {
-    if (cardLikeButton.classList.contains('card__like-button_is-active')) {
-      onCardRemoveLike({
-        cardId: id,
-        cardLikeButton: cardLikeButton,
-        likesAmount: likesAmount,
-      });
-    } else {
-      onCardLike({
-        cardId: id,
-        cardLikeButton: cardLikeButton,
-        likesAmount: likesAmount,
-      });
+    if (typeof onLikeButtonClick === 'function') {
+      onLikeButtonClick(id, cardLikeButton, likesAmount);
     }
   });
 
   cardImage.addEventListener('click', () => {
-    const popupImage = document.querySelector('.popup_type_image .popup__image');
-    const popupCaption = document.querySelector('.popup_type_image .popup__caption');
-
-    if (popupImage === null || popupCaption === null) {
-      console.error('Попап картинки карточки не найден');
-      return;
+    if (typeof onImageClick === 'function') {
+      onImageClick(cardImage.src, title);
     }
-
-    popupImage.src = cardImage.src;
-    popupCaption.textContent = title;
-
-    cardImagePopup.show();
   });
 
   cardImage.addEventListener('error', () => {
@@ -108,148 +57,29 @@ function createCardNode({ id, title, imageUrl, likesCount, showDelete, isLiked }
 
   if (showDelete === true) {
     cardDeleteButton.addEventListener('click', () => {
-      const deletePopupForm = document.querySelector("form[name='delete-card']");
-      const paragraph = deletePopupForm.querySelector('p');
-      const input = deletePopupForm.querySelector("input[name='card-id']");
-
-      paragraph.textContent = `Вы собираетесь удалить '${title}'.`;
-      input.value = id;
-      deleteCardPopup.show();
+      if (typeof onDeleteClick === 'function') {
+        onDeleteClick(id, title);
+      }
     });
   }
 
   return card;
 }
 
-function createCardList(data) {
-  const list = [];
-  data.forEach((item) => {
-    list.push(cardDataToCardNode(item));
-  });
-
-  return list;
-}
-
-function getCardListContainer() {
-  const cardList = document.querySelector('.places__list');
-  if (cardList === null) {
-    console.error('контейнер для списка карточек не найден');
-    return document.createElement('div');
-  }
-
-  return cardList;
-}
-
-function clearCardsInCardList() {
-  const cardList = getCardListContainer();
-  while (cardList.firstChild) {
-    cardList.firstChild.remove();
-  }
-}
-
-function onCardListLoaded(data) {
-  clearCardsInCardList();
-
-  const cardList = getCardListContainer();
-  const list = createCardList(data);
-  list.forEach((item) => {
-    cardList.append(item);
-  });
-}
-
-function addCardToList(card) {
-  const cardList = getCardListContainer();
+function addCardToList(cardList, card) {
   cardList.prepend(card);
 }
 
-function cardDataToCardNode(data) {
-  const isDelete = data.owner._id === currentUser.id;
-  const isLiked = data.likes.some((el) => el._id === currentUser.id);
-
-  return createCardNode({
-    id: data._id,
-    title: data.name,
-    imageUrl: data.link,
-    showDelete: isDelete,
-    isLiked: isLiked,
-    likesCount: data.likes.length,
-  });
-}
-
-function onNewCardCreation(data) {
-  const cardNode = cardDataToCardNode(data);
-  addCardToList(cardNode);
-}
-
-function cardFormHandler({ onCardCreation }) {
-  const form = document.querySelector("form[name='new-place']");
-  const name = form.querySelector("input[name='place-name']");
-  const link = form.querySelector("input[name='link']");
-
-  if (name === null || link === null) {
-    console.error('Форма карточки не найдена');
-    return;
+function removeCardFromList(cardId) {
+  const card = document.querySelector(`[data-id='${cardId}']`);
+  if (card) {
+    card.remove();
   }
-
-  form.addEventListener('submit', (e) => {
-    e.preventDefault();
-    form.dispatchEvent(customFormEvents.formLoading);
-
-    cardAPI
-      .create({
-        name: name.value,
-        link: link.value,
-      })
-      .then((response) => {
-        onNewCardCreation(response);
-        if (typeof onCardCreation === 'function') {
-          onCardCreation();
-        }
-      })
-      .catch((error) => {
-        console.log(error);
-      })
-      .finally(() => {
-        form.dispatchEvent(customFormEvents.formStopLoading);
-      });
-  });
 }
 
-function deleteCardFormHandler({ onCardDeletion }) {
-  const form = document.querySelector("form[name='delete-card']");
-  const cardId = form.querySelector("input[name='card-id']");
-
-  if (cardId === null) {
-    console.error('Форма удаления карточки не найдена');
-    return;
-  }
-
-  form.addEventListener('submit', (e) => {
-    e.preventDefault();
-    form.dispatchEvent(customFormEvents.formLoading);
-
-    cardAPI
-      .delete(cardId.value)
-      .then(() => {
-        if (typeof onCardDeletion === 'function') {
-          onCardDeletion();
-        }
-      })
-      .catch((error) => {
-        console.log(error);
-      })
-      .finally(() => {
-        form.dispatchEvent(customFormEvents.formStopLoading);
-      });
-  });
+function updateCardLikeUI({ likeButton, likeText, likeCount }) {
+  likeButton.classList.toggle('card__like-button_is-active');
+  likeText.textContent = likeCount;
 }
-deleteCardFormHandler({
-  onCardDeletion: () => {
-    cardAPI.loadList().then((response) => {
-      onCardListLoaded(response);
-    });
-    deleteCardPopup.hide();
-  },
-});
 
-export { cardFormHandler, onCardListLoaded };
+export { createCardNode, addCardToList, removeCardFromList, updateCardLikeUI };

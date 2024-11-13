@@ -1,3 +1,16 @@
+const customPopupEvents = {
+  close: new Event('close-popup'),
+};
+
+function closePopupOnESC(e) {
+  if (e.key === 'Escape') {
+    const popup = document.querySelector('.popup_is-opened');
+    if (popup) {
+      popup.dispatchEvent(customPopupEvents.close);
+    }
+  }
+}
+
 function enablePopup({ popupSelector, triggerSelector, onShowPopup, onHidePopup }) {
   const popup = document.querySelector(popupSelector);
   const trigger = document.querySelector(triggerSelector);
@@ -16,8 +29,16 @@ function enablePopup({ popupSelector, triggerSelector, onShowPopup, onHidePopup 
 
   trigger.addEventListener('click', show);
   closeButton.addEventListener('click', hide);
+  popup.addEventListener('click', (e) => {
+    if (e.target === popup) {
+      hide();
+    }
+  });
+  popup.addEventListener(customPopupEvents.close.type, hide);
 
   function show() {
+    document.addEventListener('keydown', closePopupOnESC);
+
     popup.classList.add('popup_is-animated');
     setTimeout(() => {
       popup.classList.add('popup_is-opened');
@@ -29,6 +50,8 @@ function enablePopup({ popupSelector, triggerSelector, onShowPopup, onHidePopup 
   }
 
   function hide() {
+    document.removeEventListener('keydown', closePopupOnESC);
+
     popup.classList.remove('popup_is-opened');
     setTimeout(() => {
       popup.classList.remove('popup_is-animated');
@@ -45,4 +68,4 @@ function enablePopup({ popupSelector, triggerSelector, onShowPopup, onHidePopup 
   };
 }
 
-export { enablePopup }
+export { enablePopup };

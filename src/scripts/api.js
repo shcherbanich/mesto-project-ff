@@ -6,115 +6,113 @@ const config = {
   },
 };
 
+async function request({ path, options, errorMessage }) {
+  return fetch(`${config.baseUrl}${path}`, options).then((response) => {
+    return checkResponse(response, errorMessage);
+  });
+}
+
+function checkResponse(response, errorMessage) {
+  if (!response.ok) {
+    return Promise.reject(`${errorMessage}: ${response.status}`);
+  }
+
+  return response.json();
+}
+
 const currentUserAPI = {
   load: async () => {
-    return fetch(`${config.baseUrl}/users/me`, {
-      method: 'GET',
-      headers: config.headers,
-    }).then((response) => {
-      if (response.ok) {
-        return response.json();
-      } else {
-        return Promise.reject(`Ошибка API при получении данных пользователя: ${response.status}`);
-      }
+    return request({
+      path: '/users/me',
+      options: {
+        method: 'GET',
+        headers: config.headers,
+      },
+      errorMessage: 'Ошибка API при получении данных пользователя',
     });
   },
   update: async ({ name, description }) => {
-    return fetch(`${config.baseUrl}/users/me`, {
-      method: 'PATCH',
-      headers: config.headers,
-      body: JSON.stringify({
-        name: name,
-        about: description,
-      }),
-    }).then((response) => {
-      if (response.ok) {
-        return response.json();
-      } else {
-        return Promise.reject(`Ошибка API при обновлении данных пользователя: ${response.status}`);
-      }
+    return request({
+      path: '/users/me',
+      options: {
+        method: 'PATCH',
+        headers: config.headers,
+        body: JSON.stringify({
+          name: name,
+          about: description,
+        }),
+      },
+      errorMessage: 'Ошибка API при обновлении данных пользователя',
     });
   },
   updateAvatar: async ({ link }) => {
-    return fetch(`${config.baseUrl}/users/me/avatar`, {
-      method: 'PATCH',
-      headers: config.headers,
-      body: JSON.stringify({
-        avatar: link,
-      }),
-    }).then((response) => {
-      if (response.ok) {
-        return response.json();
-      } else {
-        return Promise.reject(`Ошибка API при обновлении аватара: ${response.status}`);
-      }
+    return request({
+      path: '/users/me/avatar',
+      options: {
+        method: 'PATCH',
+        headers: config.headers,
+        body: JSON.stringify({
+          avatar: link,
+        }),
+        errorMessage: 'Ошибка API при обновлении аватара',
+      },
     });
   },
 };
 
 const cardAPI = {
   loadList: async () => {
-    return fetch(`${config.baseUrl}/cards`, {
-      method: 'GET',
-      headers: config.headers,
-    }).then((response) => {
-      if (response.ok) {
-        return response.json();
-      } else {
-        return Promise.reject(`Ошибка API при получении списка карточек: ${response.status}`);
-      }
+    return request({
+      path: '/cards',
+      options: {
+        method: 'GET',
+        headers: config.headers,
+      },
+      errorMessage: 'Ошибка API при получении списка карточек',
     });
   },
   create: async ({ name, link }) => {
-    return fetch(`${config.baseUrl}/cards`, {
-      method: 'POST',
-      headers: config.headers,
-      body: JSON.stringify({
-        name: name,
-        link: link,
-      }),
-    }).then((response) => {
-      if (response.ok) {
-        return response.json();
-      } else {
-        return Promise.reject(`Ошибка API при создании новой карточки: ${response.status}`);
-      }
+    return request({
+      path: '/cards',
+      options: {
+        method: 'POST',
+        headers: config.headers,
+        body: JSON.stringify({
+          name: name,
+          link: link,
+        }),
+      },
+      errorMessage: 'Ошибка API при создании новой карточки',
     });
   },
   like: async (cardId) => {
-    return fetch(`${config.baseUrl}/cards/likes/${cardId}`, {
-      method: 'PUT',
-      headers: config.headers,
-    }).then((response) => {
-      if (response.ok) {
-        return response.json();
-      } else {
-        return Promise.reject(`Ошибка API при лайкании карточки: ${response.status}`);
-      }
+    return request({
+      path: `/cards/likes/${cardId}`,
+      options: {
+        method: 'PUT',
+        headers: config.headers,
+      },
+      errorMessage: 'Ошибка API при лайкании карточки',
     });
   },
   removeLike: async (cardId) => {
-    return fetch(`${config.baseUrl}/cards/likes/${cardId}`, {
-      method: 'DELETE',
-      headers: config.headers,
-    }).then((response) => {
-      if (response.ok) {
-        return response.json();
-      } else {
-        return Promise.reject(`Ошибка API при убирании лайка карточки: ${response.status}`);
-      }
+    return request({
+      path: `/cards/likes/${cardId}`,
+      options: {
+        method: 'DELETE',
+        headers: config.headers,
+      },
+      errorMessage: 'Ошибка API при убирании лайка карточки',
     });
   },
   delete: async (cardId) => {
-    return fetch(`${config.baseUrl}/cards/${cardId}`, {
-      method: 'DELETE',
-      headers: config.headers,
-    }).then((response) => {
-      if (response.ok) {
-        return response.json();
-      } else {
-        return Promise.reject(`Ошибка API при удалении карточки: ${response.status}`);
-      }
+    return request({
+      path: `/cards/${cardId}`,
+      options: {
+        method: 'DELETE',
+        headers: config.headers,
+      },
+      errorMessage: 'Ошибка API при удалении карточки',
     });
   },
 };
