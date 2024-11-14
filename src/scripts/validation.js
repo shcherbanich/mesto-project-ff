@@ -15,7 +15,7 @@ function hideInputError(formElement, inputElement, validationConfig) {
   errorElement.textContent = '';
 }
 
-function isValid(formElement, inputElement, validationConfig) {
+function validate(formElement, inputElement, validationConfig) {
   if (inputElement.validity.patternMismatch) {
     inputElement.setCustomValidity(inputElement.dataset.errorMessage);
   } else {
@@ -53,7 +53,7 @@ function setEventListeners(formElement, validationConfig) {
 
   inputList.forEach((inputElement) => {
     inputElement.addEventListener('input', () => {
-      isValid(formElement, inputElement, validationConfig);
+      validate(formElement, inputElement, validationConfig);
       toggleButtonState(inputList, buttonElement);
     });
   });

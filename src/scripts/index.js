@@ -101,7 +101,7 @@ function setUserAvatarDataOnPopup() {
   avatarFormDom.link.value = currentUser.avatar;
 }
 
-function userFormHandler({ onUserDataUpdate }) {
+function handleUserForm({ onUserDataUpdate }) {
   if (userFormDom.form === null || userFormDom.name === null || userFormDom.description === null) {
     console.error('Форма пользователя не найдена');
     return;
@@ -131,7 +131,7 @@ function userFormHandler({ onUserDataUpdate }) {
   });
 }
 
-function avatarFormHandler({ onAvatarDataUpdate }) {
+function handleAvatarForm({ onAvatarDataUpdate }) {
   if (avatarFormDom.form === null || avatarFormDom.link === null) {
     console.error('Форма аватара не найдена');
     return;
@@ -185,7 +185,7 @@ const cardImagePopupDom = {
 const cardPopup = enablePopup({
   popupSelector: '.popup_type_new-card',
   triggerSelector: '.profile__add-button',
-  onHidePopup: () => {
+  onShowPopup: () => {
     clearInputValues(cardFormDom.form, validationConfig);
     clearValidation(cardFormDom.form, validationConfig);
   },
@@ -201,7 +201,7 @@ const cardImagePopup = enablePopup({
   triggerSelector: '.hidden-popup-trigger',
 });
 
-function onCardLike({ cardId, cardLikeButton, likesAmount }) {
+function addCardLike({ cardId, cardLikeButton, likesAmount }) {
   cardAPI
     .like(cardId)
     .then((response) => {
@@ -216,7 +216,7 @@ function onCardLike({ cardId, cardLikeButton, likesAmount }) {
     });
 }
 
-function onCardRemoveLike({ cardId, cardLikeButton, likesAmount }) {
+function removeCardLike({ cardId, cardLikeButton, likesAmount }) {
   cardAPI
     .removeLike(cardId)
     .then((response) => {
@@ -233,13 +233,13 @@ function onCardRemoveLike({ cardId, cardLikeButton, likesAmount }) {
 
 function onCardLikeButtonClick(id, cardLikeButton, likesAmount) {
   if (cardLikeButton.classList.contains('card__like-button_is-active')) {
-    onCardRemoveLike({
+    removeCardLike({
       cardId: id,
       cardLikeButton: cardLikeButton,
       likesAmount: likesAmount,
     });
   } else {
-    onCardLike({
+    addCardLike({
       cardId: id,
       cardLikeButton: cardLikeButton,
       likesAmount: likesAmount,
@@ -276,7 +276,7 @@ function onCardDeleteClick(id, title) {
   deleteCardPopup.show();
 }
 
-function cardDataToCardNode(data) {
+function convertCardDataToCardNode(data) {
   const isDelete = data.owner._id === currentUser.id;
   const isLiked = data.likes.some((el) => el._id === currentUser.id);
 
@@ -305,16 +305,16 @@ function getCardListContainer() {
 function onCardListLoaded(data) {
   const cardList = getCardListContainer();
   data.forEach((item) => {
-    cardList.append(cardDataToCardNode(item));
+    cardList.append(convertCardDataToCardNode(item));
   });
 }
 
 function onNewCardCreation(data) {
-  const cardNode = cardDataToCardNode(data);
+  const cardNode = convertCardDataToCardNode(data);
   addCardToList(cardDom.cardList, cardNode);
 }
 
-function cardFormHandler({ onCardCreation }) {
+function handleCardForm({ onCardCreation }) {
   if (cardFormDom.form === null || cardFormDom.name === null || cardFormDom.link === null) {
     console.error('Форма карточки не найдена');
     return;
@@ -344,7 +344,7 @@ function cardFormHandler({ onCardCreation }) {
   });
 }
 
-function deleteCardFormHandler({ onCardDeletion }) {
+function handleDeleteCardForm({ onCardDeletion }) {
   if (cardDeleteFormDom.form === null || cardDeleteFormDom.cardId === null) {
     console.error('Форма удаления карточки не найдена');
     return;
@@ -388,25 +388,25 @@ enableValidation(validationConfig);
 
 loadInitialData();
 
-userFormHandler({
+handleUserForm({
   onUserDataUpdate: () => {
     profilePopup.hide();
   },
 });
 
-cardFormHandler({
+handleCardForm({
   onCardCreation: () => {
     cardPopup.hide();
   },
 });
 
-avatarFormHandler({
+handleAvatarForm({
   onAvatarDataUpdate: () => {
     avatarPopup.hide();
   },
 });
 
-deleteCardFormHandler({
+handleDeleteCardForm({
   onCardDeletion: (cardId) => {
     removeCardFromList(cardId);
     deleteCardPopup.hide();
